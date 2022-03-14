@@ -4,7 +4,15 @@
       <v-btn color="primary" outlined dark v-bind="attrs" v-on="on">詳細</v-btn>
     </template>
     <v-card>
-      <v-card-title>ガチャ結果詳細</v-card-title>
+      <v-card-title>
+        <v-select
+          :items="result_title"
+          v-model="result_selected"
+          hide-details="auto"
+          dense
+          outlined
+        ></v-select>
+      </v-card-title>
       <v-divider></v-divider>
       <v-card-text style="height: 300px;">
         <div>消費元宝：{{total.total_price}}</div>
@@ -20,7 +28,7 @@
             </thead>
             <tbody>
               <tr v-for="item in items" :key="item.text">
-                <td>{{ item.text }}</td>
+                <td v-html="item.text"></td>
                 <td>
                   <v-row justify="center" v-if="item.use.discount">
                     <v-img src="@/assets/discount-tickets.png" max-width="28"></v-img>
@@ -57,7 +65,14 @@ export default {
       dialog: false,
       total: {
         total_price: 0
-      }
+      },
+      result_title: [
+        {
+          text: "推定に最も近い",
+          value: "1"
+        }
+      ],
+      result_selected: "1"
     };
   },
   watch: {
@@ -88,6 +103,7 @@ export default {
         let kizuna = 0;
         let lucky = 0;
         let discount = 0;
+        let execute = "単発";
         calc.data.log
           .filter(item => item.startsWith("GET.KIZUNA"))
           .forEach(item => {
@@ -97,8 +113,11 @@ export default {
           .length;
         discount = calc.data.log.filter(item => item.startsWith("GET.DISCOUNT"))
           .length;
+        if (calc.data.log.includes("EXECUTE.TEN")) {
+          execute = "十連";
+        }
         items.push({
-          text: `${calc.data.step}`,
+          text: `${calc.data.step}<br /><span style="font-size: 0.6rem">${execute}</span>`,
           // eslint-disable-next-line no-irregular-whitespace
           get: [`絆 +${kizuna}`, `幸 +${lucky}`, `割 +${discount}`]
             .filter(item => !item.includes("+0"))

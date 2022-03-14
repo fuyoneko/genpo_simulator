@@ -51,6 +51,8 @@ class Calculate {
     // 支払いを実行する
     // 節約の指定があれば幸運券を節約する
     const mode = this.payment(UNIT_PRICE, 1, do_not_discount);
+    // ログに記録する
+    this.data.log.push("EXECUTE.ONE");
     // ガチャを実行する
     this.executeCommon(before_step, this.data.step, mode);
   }
@@ -60,6 +62,8 @@ class Calculate {
     // 支払いを実行する
     // 10連の時、割引券の節約はしない
     const mode = this.payment(UNIT_TEN_PRICE, 10, false);
+    // ログに記録する
+    this.data.log.push("EXECUTE.TEN");
     // ガチャを実行する
     this.executeCommon(before_step, this.data.step, mode);
   }
