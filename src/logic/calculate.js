@@ -16,6 +16,7 @@ class CalculateData {
     this.discount = 0;
     this.seed = seed;
     this.random = new MersenneTwister(this.seed);
+    this.log = [];
   }
 }
 
@@ -63,22 +64,32 @@ class Calculate {
     this.executeCommon(before_step, this.data.step, mode);
   }
 
+  executeStep(require, do_not_use_discount_when_one = false) {
+    // ログを初期化する
+    this.data.log = [];
+    if (this.data.tickets >= 1) {
+      this.executeOne();
+    } else if (this.data.lucky >= 1 && !do_not_use_discount_when_one) {
+      // 幸運券があるのなら、単発で引く
+      // ※もし割引券の節約が必要なら幸運券による10連を優先する
+      this.executeOne(do_not_use_discount_when_one);
+    } else if (this.data.current + this.data.kakutei <= require) {
+      // 10連を引く
+      // 幸運券があればそれを優先して使う。なければ割引券を使う
+      this.executeTen();
+    } else {
+      // 残りの絆の数が確定よりも少ないのなら、単発で引く
+      this.executeOne();
+    }
+  }
+
+  isNeedToExecute(require) {
+    return this.data.current < require ? true : false;
+  }
+
   execute(require, do_not_use_discount_when_one = false) {
-    while (this.data.current < require) {
-      if (this.data.tickets >= 1) {
-        this.executeOne();
-      } else if (this.data.lucky >= 1 && !do_not_use_discount_when_one) {
-        // 幸運券があるのなら、単発で引く
-        // ※もし割引券の節約が必要なら幸運券による10連を優先する
-        this.executeOne(do_not_use_discount_when_one);
-      } else if (this.data.current + this.data.kakutei <= require) {
-        // 10連を引く
-        // 幸運券があればそれを優先して使う。なければ割引券を使う
-        this.executeTen();
-      } else {
-        // 残りの絆の数が確定よりも少ないのなら、単発で引く
-        this.executeOne();
-      }
+    while (this.isNeedToExecute(require)) {
+      this.executeStep(require, do_not_use_discount_when_one);
     }
   }
 }

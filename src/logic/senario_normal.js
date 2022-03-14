@@ -20,6 +20,7 @@ function normal_senario_payment(data, price, add_step) {
   if (data.tickets >= 1) {
     // 水引があるなら元宝消費しない
     data.tickets -= 1;
+    data.log.push("USE.TICKETS");
     return result;
   }
   // 水引を使わない場合
@@ -59,6 +60,7 @@ const SENARIO_NORMAL_KAKUTEI = {
   condition: (step) => step % 10 == 0,
   process: (data, buff) => {
     data.current += data.kakutei * buff;
+    data.log.push(`GET.KIZUNA.${data.kakutei * buff}`);
   },
 };
 
@@ -67,6 +69,7 @@ const SENARIO_NORMAL_KAKUTEI_NO_BUFF = {
   condition: (step) => step % 10 == 0,
   process: (data) => {
     data.current += data.kakutei;
+    data.log.push(`GET.KIZUNA.${data.kakutei}`);
   },
 };
 
@@ -83,6 +86,7 @@ const SENARIO_NORMAL_GACHA = {
     const reward = MAPPING_TABLE[data.random.nextInt(0, 99)];
     if (reward == REWARD_KIZUNA) {
       data.current += 2 * buff;
+      data.log.push(`GET.KIZUNA.${2 * buff}`);
     }
   },
 };
@@ -99,9 +103,11 @@ const SENARIO_NORMAL_MIN_GACHA = {
   process: (data, _, step) => {
     if (step != 1) {
       data.current += 2 * 5;
+      data.log.push(`GET.KIZUNA.${2 * 5}`);
     } else {
       // 初回は絶対にバフが乗らない
       data.current += 2;
+      data.log.push(`GET.KIZUNA.${2}`);
     }
   },
 };

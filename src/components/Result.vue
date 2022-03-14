@@ -35,6 +35,7 @@
       <v-spacer />
       <v-btn outlined color="primary" @click="onClickBack">戻る</v-btn>
       <v-spacer />
+      <data-list :parameters="parameters" :seeds="seeds" :senario="senario"></data-list>
     </v-card-actions>
   </v-card>
 </template>
@@ -42,6 +43,7 @@
 <script>
 import ChartGraph from "./ChartGraph";
 import Calculate from "../logic/calculate";
+import DataList from "./DataList";
 import {
   SENARIO_KAKUTEI,
   SENARIO_GACHA,
@@ -66,12 +68,16 @@ const ValueToString = value => {
 
 export default {
   components: {
-    "chart-graph": ChartGraph
+    "chart-graph": ChartGraph,
+    "data-list": DataList
   },
   data() {
     return {
       results: [],
-      help_message: false
+      help_message: false,
+      parameters: null,
+      seeds: 0,
+      senario: []
     };
   },
   methods: {
@@ -136,6 +142,7 @@ export default {
       let max_step = Number.MIN_SAFE_INTEGER;
       let total_price = 0;
       let total_count = 0;
+      let seed_map = [];
 
       // 取得数をヒストグラム化するための変数
       const binning = [];
@@ -187,6 +194,7 @@ export default {
         total_count += 1;
 
         addToBinning(binning, calc.data.price_total);
+        seed_map.push({ seed: calc.data.seed, price: calc.data.price_total });
       }
 
       // 平均を計算する
@@ -207,6 +215,16 @@ export default {
         return current;
       });
 
+      const first_item = seed_map.find(
+        item => item.price < max_element.max && item.price > max_element.min
+      );
+
+      // 詳細画面に連携する
+      this.parameters = parameters;
+      this.seeds = first_item.seed;
+      this.senario = execute_senario;
+
+      // 概要に連携する
       this.results = [
         {
           title: "計算上の最大元宝",

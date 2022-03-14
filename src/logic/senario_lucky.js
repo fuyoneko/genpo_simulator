@@ -3,6 +3,7 @@ const REWARD_LUCKY = "lucky";
 const REWARD_DISCOUNT = "discount";
 const MODE_DISCOUNT = "discount";
 const MODE_LUCKY = "lucky";
+const MODE_NONE = "none";
 
 /**
  * 支払いのシナリオ
@@ -12,23 +13,29 @@ const MODE_LUCKY = "lucky";
  */
 function lucky_senario_payment(data, price, add_step, do_not_discount = false) {
   data.step += add_step;
+  let return_mode = MODE_LUCKY;
+  if (data.lucky == 0) {
+    // 支払い時点で幸運券があれば、幸運券の使用を許可する
+    return_mode = MODE_NONE;
+  }
   // ガチャチケットがあれば利用する
   // 必ず幸運券を併用する
   if (data.tickets >= 1) {
     data.tickets -= 1;
-    return MODE_LUCKY;
+    data.log.push("USE.TICKETS");
+    return return_mode;
   }
   // 幸運券があるのなら、それを優先する
   if (data.lucky >= 1) {
     // 10連であれば無条件で利用する
     if (add_step != 1) {
       data.price_total += price;
-      return MODE_LUCKY;
+      return return_mode;
     }
     // 1連であれば、確定の時だけLuckyを利用する
     if (add_step == 1 && SENARIO_KAKUTEI.condition(data.step)) {
       data.price_total += price;
-      return MODE_LUCKY;
+      return return_mode;
     }
   }
   // 割引券があるなら使用する
@@ -36,11 +43,12 @@ function lucky_senario_payment(data, price, add_step, do_not_discount = false) {
   if (data.discount >= 1 && !do_not_discount) {
     data.price_total += price * 0.8;
     data.discount -= 1;
+    data.log.push("USE.DISCOUNT");
     return MODE_DISCOUNT;
   }
   // 幸運、割引なしで元宝を引く
   data.price_total += price;
-  return MODE_LUCKY;
+  return return_mode;
 }
 
 const MAPPING_TABLE = [];
@@ -70,6 +78,7 @@ const SENARIO_LUCKY = {
   condition: (step) => step == 29,
   process: (data) => {
     data.lucky += 1;
+    data.log.push("GET.LUCKY");
   },
 };
 
@@ -81,8 +90,11 @@ const SENARIO_KAKUTEI = {
       // 幸運券があるなら消費する
       data.current += data.kakutei * 2;
       data.lucky -= 1;
+      data.log.push("USE.LUCKY");
+      data.log.push(`GET.KIZUNA.${data.kakutei * 2}`);
     } else {
       data.current += data.kakutei;
+      data.log.push(`GET.KIZUNA.${data.kakutei}`);
     }
   },
 };
@@ -101,14 +113,17 @@ const SENARIO_GACHA = {
     if (reward == REWARD_KIZUNA) {
       // 絆が排出されたのなら
       data.current += 2;
+      data.log.push("GET.KIZUNA.2");
     }
     if (reward == REWARD_DISCOUNT) {
       // 割引券が排出されたのなら
       data.discount += 1;
+      data.log.push("GET.DISCOUNT");
     }
     if (reward == REWARD_LUCKY) {
       // 幸運券が排出されたのなら
       data.lucky += 1;
+      data.log.push("GET.LUCKY");
     }
   },
 };
@@ -124,6 +139,7 @@ const SENARIO_MIN_GACHA = {
   },
   process: (data) => {
     data.current += 2;
+    data.log.push("GET.KIZUNA.2");
   },
 };
 
