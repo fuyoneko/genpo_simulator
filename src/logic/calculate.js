@@ -1,11 +1,12 @@
 import { lucky_senario_payment } from "./senario_lucky";
 import { normal_senario_payment } from "./senario_normal";
+import MersenneTwister from "./mt";
 
 const UNIT_PRICE = 300;
 const UNIT_TEN_PRICE = 2980;
 
 class CalculateData {
-  constructor() {
+  constructor(seed) {
     this.kakutei = 5;
     this.step = 0;
     this.price_total = 0;
@@ -13,12 +14,14 @@ class CalculateData {
     this.tickets = 0;
     this.lucky = 0;
     this.discount = 0;
+    this.seed = seed;
+    this.random = new MersenneTwister(this.seed);
   }
 }
 
 class Calculate {
-  constructor(builder, senario, mode) {
-    this.data = builder(new CalculateData());
+  constructor(builder, senario, mode, seed) {
+    this.data = builder(new CalculateData(seed));
     this.senario = senario;
     this.mode = mode;
   }

@@ -97,8 +97,7 @@ const SENARIO_GACHA = {
     return false;
   },
   process: (data) => {
-    const parcent = Math.ceil(Math.random() * 99);
-    const reward = MAPPING_TABLE[parcent];
+    const reward = MAPPING_TABLE[data.random.nextInt(0, 99)];
     if (reward == REWARD_KIZUNA) {
       // 絆が排出されたのなら
       data.current += 2;

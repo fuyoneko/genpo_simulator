@@ -161,12 +161,22 @@ export default {
       };
 
       // 最大を計算する
-      const calc_max = new Calculate(initializer, max_senario, mode);
+      const calc_max = new Calculate(
+        initializer,
+        max_senario,
+        mode,
+        Math.floor(Math.random() * 99999999)
+      );
       calc_max.execute(require, do_not_use_discount_when_one);
 
       for (let index = 0; index < tests; index++) {
         // ガチャの結果を取得する
-        const calc = new Calculate(initializer, execute_senario, mode);
+        const calc = new Calculate(
+          initializer,
+          execute_senario,
+          mode,
+          Math.floor(Math.random() * 99999999)
+        );
         calc.execute(require, do_not_use_discount_when_one);
 
         min_price = Math.min(calc.data.price_total, min_price);
