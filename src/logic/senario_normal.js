@@ -10,7 +10,7 @@ function normal_senario_payment(data, price, add_step) {
   let result = 1;
   // 初回以外はバフが乗る可能性がある
   if (data.step != 0) {
-    result = BUFFER_TABLE[data.random.nextInt(0, 99)];
+    result = BUFFER_TABLE[data.random.nextInt(0, 100)];
   }
   // 9回目は2倍以上確定
   if (data.step == 9 && result == 1) {
@@ -83,7 +83,7 @@ const SENARIO_NORMAL_GACHA = {
     return false;
   },
   process: (data, buff) => {
-    const reward = MAPPING_TABLE[data.random.nextInt(0, 99)];
+    const reward = MAPPING_TABLE[data.random.nextInt(0, 100)];
     if (reward == REWARD_KIZUNA) {
       data.current += 2 * buff;
       data.log.push(`GET.KIZUNA.${2 * buff}`);
