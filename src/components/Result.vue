@@ -208,6 +208,7 @@ export default {
       binning.splice(0, last_index);
       binning.reverse();
 
+      // 最頻領域を取得する
       const max_element = binning.reduce((previous, current) => {
         if (previous && previous.count > current.count) {
           return previous;
@@ -215,13 +216,31 @@ export default {
         return current;
       });
 
-      const first_item = seed_map.find(
-        item => item.price < max_element.max && item.price > max_element.min
+      // 最頻領域の最小値を取得する
+      const frequency_area = seed_map.sort((a, b) => a.price - b.price);
+      const all_min = frequency_area[0];
+      const frequency_area_min = frequency_area.find(
+        item => item.price > max_element.min
+      );
+      const frequency_area_mid = frequency_area.find(
+        item => item.price > (max_element.min + max_element.max) / 2
+      );
+      // 順序を反転する
+      frequency_area.reverse();
+      const all_max = frequency_area[0];
+      const frequency_area_max = frequency_area.find(
+        item => item.price < max_element.max
       );
 
       // 詳細画面に連携する
       this.parameters = parameters;
-      this.seeds = first_item.seed;
+      this.seeds = {
+        all_min: all_min.seed,
+        all_max: all_max.seed,
+        frequency_min: frequency_area_min.seed,
+        frequency_mid: frequency_area_mid.seed,
+        frequency_max: frequency_area_max.seed
+      };
       this.senario = execute_senario;
 
       // 概要に連携する

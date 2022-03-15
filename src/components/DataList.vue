@@ -68,15 +68,39 @@ export default {
       },
       result_title: [
         {
-          text: "推定に最も近い",
-          value: "1"
+          text: "推定最小（少し運の良い結果）",
+          value: "frequency_min"
+        },
+        {
+          text: "推定中央（真ん中ほどの結果）",
+          value: "frequency_mid"
+        },
+        {
+          text: "推定最大（少し運の悪い結果）",
+          value: "frequency_max"
+        },
+        {
+          text: "最も安かったガチャ結果",
+          value: "all_min"
+        },
+        {
+          text: "最も高かったガチャ結果",
+          value: "all_max"
         }
       ],
-      result_selected: "1"
+      result_selected: "frequency_mid"
     };
   },
   watch: {
+    result_selected() {
+      this.updateItems();
+    },
     dialog() {
+      this.updateItems();
+    }
+  },
+  methods: {
+    updateItems() {
       // ガチャを引くスタイル（単発時に割引券を使うか？）
       const do_not_use_discount_when_one =
         this.parameters.options.pray == 0 ? true : false;
@@ -90,32 +114,40 @@ export default {
         return data;
       };
 
+      // Result.vueと同じパラメータ、同じシード値で再計算する
       const calc = new Calculate(
         initializer,
         this.senario,
         this.parameters.request_type,
-        this.seeds
+        this.seeds[this.result_selected]
       );
 
       let items = [];
+      // ガチャを実行する必要があれるあいだはループを繰り返す
       while (calc.isNeedToExecute(this.parameters.require)) {
+        // ガチャを一回実行する
         calc.executeStep(this.parameters.require, do_not_use_discount_when_one);
         let kizuna = 0;
         let lucky = 0;
         let discount = 0;
         let execute = "単発";
+        // 絆の数の変動を合計する
         calc.data.log
           .filter(item => item.startsWith("GET.KIZUNA"))
           .forEach(item => {
             kizuna += parseInt(item.replace("GET.KIZUNA.", ""));
           });
+        // 幸運券の変動を取得する
         lucky = calc.data.log.filter(item => item.startsWith("GET.LUCKY"))
           .length;
+        // 割引券の変動を取得する
         discount = calc.data.log.filter(item => item.startsWith("GET.DISCOUNT"))
           .length;
+        // 10連を引いたのならそれを表示する
         if (calc.data.log.includes("EXECUTE.TEN")) {
           execute = "十連";
         }
+        // 画面に出力する
         items.push({
           text: `${calc.data.step}<br /><span style="font-size: 0.6rem">${execute}</span>`,
           // eslint-disable-next-line no-irregular-whitespace
