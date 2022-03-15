@@ -1,13 +1,14 @@
 <template>
   <v-sheet height="100%" class="brown darken-4 mb-12" tile>
-    <v-row class="fill-height" align="center" justify="center">
+    <v-row
+      class="fill-height"
+      align="center"
+      justify="center"
+      style="width: 370px; margin-left: 2px"
+    >
       <v-container>
         <v-row align="center" justify="center" class="mt-1">
-          <input-field
-            key="field"
-            v-show="view_status == 0"
-            @on-start="onStart"
-          ></input-field>
+          <input-field key="field" v-show="view_status == 0" @on-start="onStart"></input-field>
           <result-view
             key="result"
             v-show="view_status == 1"
@@ -15,18 +16,14 @@
             ref="result"
           ></result-view>
         </v-row>
-        <v-row
-          align="center"
-          justify="center"
-          class="head-title white--text mt-2"
-          >元宝おいくらニャン？</v-row
-        >
+        <v-row align="center" justify="center" class="head-title white--text mt-2">元宝おいくらニャン？</v-row>
         <v-row justify="center" align="center" class="white--text mt-12">
-          <v-img src="@/assets/choukoumei.png" max-width="380"></v-img>
+          <v-img src="@/assets/choukoumei.png" max-width="360" width="360"></v-img>
         </v-row>
         <v-row justify="center" align="center" class="white--text mt-12">
           ガチャでどれだけ元宝を使うのか、
-          <br />あなたの代わりに <br />いっぱい引いて確かめてみるニャン
+          <br />あなたの代わりに
+          <br />いっぱい引いて確かめてみるニャン
         </v-row>
       </v-container>
     </v-row>
@@ -41,11 +38,11 @@ export default {
   name: "-",
   components: {
     "input-field": InputField,
-    "result-view": Result,
+    "result-view": Result
   },
   data() {
     return {
-      view_status: 0,
+      view_status: 0
     };
   },
   methods: {
@@ -59,8 +56,8 @@ export default {
     onRestart() {
       this.view_status = 0;
       this.$vuetify.goTo(0);
-    },
-  },
+    }
+  }
 };
 </script>
 

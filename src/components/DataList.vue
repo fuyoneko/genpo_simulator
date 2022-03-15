@@ -16,6 +16,11 @@
       <v-divider></v-divider>
       <v-card-text style="height: 300px;">
         <div>消費元宝：{{total.total_price}}</div>
+        <div>ガチャ回数：{{total.total_count}}</div>
+        <template v-if="total.show_tickets">
+          <div>使用幸運券：{{total.lucky}}</div>
+          <div>使用割引券：{{total.discount}}</div>
+        </template>
         <v-simple-table>
           <template v-slot:default>
             <thead>
@@ -64,19 +69,23 @@ export default {
       items: [],
       dialog: false,
       total: {
-        total_price: 0
+        total_price: 0,
+        total_count: 0,
+        lucky: 0,
+        discount: 0,
+        show_tickets: false
       },
       result_title: [
         {
-          text: "推定最小（少し運の良い結果）",
+          text: "推定最小（少し運が良い）",
           value: "frequency_min"
         },
         {
-          text: "推定中央（真ん中ほどの結果）",
+          text: "推定中央（真ん中ほど）",
           value: "frequency_mid"
         },
         {
-          text: "推定最大（少し運の悪い結果）",
+          text: "推定最大（少し運が悪い）",
           value: "frequency_max"
         },
         {
@@ -94,12 +103,26 @@ export default {
   watch: {
     result_selected() {
       this.updateItems();
+      this.resetScrollPosition();
     },
     dialog() {
       this.updateItems();
+      this.resetScrollPosition();
     }
   },
   methods: {
+    resetScrollPosition() {
+      // スクロール位置を最上部に移動する
+      const elements = document.getElementsByClassName("v-dialog--active");
+      if (!elements || elements.length == 0) {
+        return;
+      }
+      const target = elements[0].getElementsByClassName("v-card__text");
+      if (!target || target.length == 0) {
+        return;
+      }
+      target[0].scrollTop = 0;
+    },
     updateItems() {
       // ガチャを引くスタイル（単発時に割引券を使うか？）
       const do_not_use_discount_when_one =
@@ -123,6 +146,8 @@ export default {
       );
 
       let items = [];
+      let total_lucky = 0;
+      let total_discount = 0;
       // ガチャを実行する必要があれるあいだはループを繰り返す
       while (calc.isNeedToExecute(this.parameters.require)) {
         // ガチャを一回実行する
@@ -147,6 +172,13 @@ export default {
         if (calc.data.log.includes("EXECUTE.TEN")) {
           execute = "十連";
         }
+        // 幸運券、割引券の総消費数を計算する
+        if (calc.data.log.includes("USE.LUCKY")) {
+          total_lucky += 1;
+        }
+        if (calc.data.log.includes("USE.DISCOUNT")) {
+          total_discount += 1;
+        }
         // 画面に出力する
         items.push({
           text: `${calc.data.step}<br /><span style="font-size: 0.6rem">${execute}</span>`,
@@ -165,6 +197,11 @@ export default {
       }
       this.items = items;
       this.total.total_price = calc.data.price_total;
+      this.total.total_count = calc.data.step;
+      this.total.lucky = total_lucky;
+      this.total.discount = total_discount;
+      this.total.show_tickets =
+        this.parameters.request_type == "lucky" ? true : false;
     }
   }
 };
@@ -177,5 +214,8 @@ thead tr {
 tbody tr {
   height: 80px !important;
   white-space: nowrap;
+}
+td {
+  padding: 0 8px !important;
 }
 </style>
