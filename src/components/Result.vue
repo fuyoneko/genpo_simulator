@@ -206,6 +206,28 @@ export default {
         item => item.price < max_element.max
       );
 
+      // 最頻値が取得できなかった場合、処理を終了する
+      if (
+        frequency_area_min === undefined ||
+        frequency_area_mid === undefined ||
+        frequency_area_max === undefined
+      ) {
+        this.results = [
+          {
+            title: `シミュレーション結果`,
+            type: "header"
+          },
+          {
+            title: "結果",
+            value: `必要な元宝はありません`,
+            descript: "ガチャ券による割引が上限を超えています",
+            type: "text"
+          }
+        ];
+        this.$refs.graph.execute(binning);
+        return;
+      }
+
       // 詳細画面に連携する
       this.parameters = parameters;
       this.seeds = {

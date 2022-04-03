@@ -462,11 +462,21 @@ export default {
         }
       }
 
+      // 割引率を計算する（最大ケースの消費元宝が0であるなら、計算しない）
+      let parcentage = 0;
+      if (max_total_price >= 1) {
+        parcentage =
+          1000 - Math.floor((min_total_price / max_total_price) * 1000);
+        if (parcentage != 0) {
+          parcentage = parcentage / 10;
+        }
+      }
+
       // サジェストのアラートを表示する
       this.$refs.suggest.show(
         parameters.options.lucky,
         parameters.options.discount,
-        100 - Math.floor((min_total_price / max_total_price) * 100),
+        parcentage,
         DiscountConditions.getMessage(max_index),
         DiscountConditions.getMessage(min_index)
       );
