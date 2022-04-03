@@ -15,7 +15,8 @@ const CONDITONS = [
     text: "できるだけ単発で引く",
     search_key: 1,
     comparable: true,
-    message: "全て単発で引いたとき",
+    message:
+      "幸運券、割引券がいずれも1枚以上あれば単発、それ以外は10連で引いたとき",
     method: () => {
       return EXECUTE_1;
     },
@@ -24,7 +25,8 @@ const CONDITONS = [
     text: "割引券5以上で単発",
     search_key: 2,
     comparable: false,
-    message: "割引券が5枚以上あれば単発、それ以外は10連で引いたとき",
+    message:
+      "幸運券が1枚以上あり、なおかつ割引券が5枚以上あれば単発、それ以外は10連で引いたとき",
     method: (data) => {
       if (data.discount >= 5) {
         return EXECUTE_1;
@@ -36,7 +38,8 @@ const CONDITONS = [
     text: "割引券10以上で単発",
     search_key: 3,
     comparable: false,
-    message: "割引券が10枚以上あれば単発、それ以外は10連で引いたとき",
+    message:
+      "幸運券が1枚以上あり、なおかつ割引券が10枚以上あれば単発、それ以外は10連で引いたとき",
     method: (data) => {
       if (data.discount >= 10) {
         return EXECUTE_1;
@@ -48,7 +51,8 @@ const CONDITONS = [
     text: "割引券15以上で単発",
     search_key: 4,
     comparable: false,
-    message: "割引券が15枚以上あれば単発、それ以外は10連で引いたとき",
+    message:
+      "幸運券が1枚以上あり、なおかつ割引券が15枚以上あれば単発、それ以外は10連で引いたとき",
     method: (data) => {
       if (data.discount >= 15) {
         return EXECUTE_1;
@@ -60,7 +64,8 @@ const CONDITONS = [
     text: "割引券20以上で単発",
     search_key: 5,
     comparable: false,
-    message: "割引券が20枚以上あれば単発、それ以外は10連で引いたとき",
+    message:
+      "幸運券が1枚以上あり、なおかつ割引券が20枚以上あれば単発、それ以外は10連で引いたとき",
     method: (data) => {
       if (data.discount >= 20) {
         return EXECUTE_1;
