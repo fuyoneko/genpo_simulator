@@ -62,6 +62,7 @@
 
 <script>
 import Calculate from "../logic/calculate";
+import DiscountConditons from "../logic/discount_conditions";
 export default {
   props: ["parameters", "seeds", "senario"],
   data() {
@@ -125,8 +126,9 @@ export default {
     },
     updateItems() {
       // ガチャを引くスタイル（単発時に割引券を使うか？）
-      const do_not_use_discount_when_one =
-        this.parameters.options.pray == 0 ? true : false;
+      const discount_condition = DiscountConditons.getMethod(
+        this.parameters.options.pray
+      );
 
       // 割引券、幸運券、ガチャ券の所持数
       const initializer = data => {
@@ -151,7 +153,10 @@ export default {
       // ガチャを実行する必要があれるあいだはループを繰り返す
       while (calc.isNeedToExecute(this.parameters.require)) {
         // ガチャを一回実行する
-        calc.executeStep(this.parameters.require, do_not_use_discount_when_one);
+        calc.executeStep(
+          this.parameters.require,
+          discount_condition(calc.data)
+        );
         let kizuna = 0;
         let lucky = 0;
         let discount = 0;

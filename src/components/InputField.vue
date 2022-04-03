@@ -120,7 +120,13 @@
               hide-details="auto"
               :items="pray_style"
               v-model="forms.pray"
+              append-outer-icon="mdi-magnify"
+              messages="虫眼鏡をタップすると、幸運券と割引券の枚数から、最も安くなる引き方を提案します。"
+              @click:append-outer="executeMagnify"
             ></v-select>
+          </v-row>
+          <v-row>
+            <suggest ref="suggest" class="mt-1" v-show="isTicketsEnabled"></suggest>
           </v-row>
         </v-col>
       </v-row>
@@ -137,6 +143,10 @@
 
 <script>
 import { required, maxLength, decimal } from "vuelidate/lib/validators";
+import DiscountConditions from "../logic/discount_conditions";
+import Suggest from "./Suggest";
+import Calculate from "../logic/calculate";
+import Senario from "../logic/senario";
 
 const DecimalCheck = (form, min, max) => {
   if (!form.decimal) {
@@ -158,10 +168,10 @@ const DecimalCheck = (form, min, max) => {
 const REWARD_ITEM_ENABLED = 0;
 const REWARD_ITEM_DISABLED = 1;
 
-const PRAY_STYLE_TEN = 0;
-const PRAY_STYLE_ONE = 1;
-
 export default {
+  components: {
+    suggest: Suggest
+  },
   data() {
     const preset = [
       {
@@ -266,16 +276,7 @@ export default {
           value: REWARD_ITEM_DISABLED
         }
       ],
-      pray_style: [
-        {
-          text: "できるだけ10連で引く",
-          value: PRAY_STYLE_TEN
-        },
-        {
-          text: "できるだけ単発で引く",
-          value: PRAY_STYLE_ONE
-        }
-      ],
+      pray_style: DiscountConditions.getSelectContents(),
       forms: {
         selected_radio: preset[0].value.selected_radio,
         require: preset[0].value.require,
@@ -284,7 +285,7 @@ export default {
         discount: "",
         lucky: "",
         kakutei: preset[0].value.kakutei,
-        pray: PRAY_STYLE_TEN
+        pray: DiscountConditions.getDefaultSearchKey()
       },
       preset: preset,
       current_preset: preset[0]
@@ -371,6 +372,110 @@ export default {
     }
   },
   methods: {
+    /**
+     * 現在のフォームの値をDict型に詰め直す
+     */
+    parseRequestValue() {
+      const stringToValue = (string, defaults) => {
+        const result = parseInt(string ?? "");
+        if (Number.isNaN(result)) {
+          return defaults;
+        }
+        return result;
+      };
+      return {
+        request_type: this.forms.selected_radio,
+        tickets: stringToValue(this.forms.tickets, 0),
+        require: stringToValue(this.forms.require, 200),
+        kakutei: stringToValue(this.forms.kakutei, 5),
+        options: {
+          discount: stringToValue(this.forms.discount, 0),
+          lucky: stringToValue(this.forms.lucky, 0),
+          reward: this.forms.reward == REWARD_ITEM_ENABLED ? true : false,
+          pray: this.forms.pray
+        }
+      };
+    },
+    /**
+     * 最適な引き方を提案する
+     */
+    executeMagnify() {
+      this.$v.$touch();
+      // 入力チェックが不正なら処理しない
+      if (
+        this.$v.$invalid ||
+        [
+          this.requireError,
+          this.ticketsError,
+          this.discountError,
+          this.luckyError,
+          this.kakuteiError
+        ].some(error => error.length >= 1)
+      ) {
+        return;
+      }
+
+      // 入力パラメータを取得する
+      const parameters = this.parseRequestValue();
+      const senario_list = Senario.load_senario(
+        parameters.request_type,
+        parameters.options.reward
+      );
+      // 消費元宝の変数を確保する
+      let min_total_price = 9999999;
+      let max_total_price = 0;
+      let min_index = DiscountConditions.getDefaultSearchKey();
+      let max_index = min_index;
+
+      // 割引券、幸運券、ガチャ券の所持数
+      const initializer = data => {
+        data.kakutei = parameters.kakutei;
+        data.tickets = parameters.tickets;
+        data.lucky = parameters.options.lucky;
+        data.discount = parameters.options.discount;
+        return data;
+      };
+
+      for (const conds of DiscountConditions.getConditions()) {
+        // 消費元宝を計算する
+        const calc = new Calculate(
+          initializer,
+          senario_list.execute_senario,
+          this.forms.selected_radio,
+          0
+        );
+        calc.execute(parameters.require, conds.method);
+
+        // 最小消費を更新する
+        let min_update_check = min_total_price;
+        min_total_price = Math.min(min_total_price, calc.data.price_total);
+        if (min_update_check != min_total_price) {
+          min_index = conds.search_key;
+        }
+        // 比較可能な時（よくあるケースの場合）は、最大消費を更新する
+        if (conds.comparable) {
+          let max_update_check = max_total_price;
+          max_total_price = Math.max(max_total_price, calc.data.price_total);
+          if (max_update_check != max_total_price) {
+            max_index = conds.search_key;
+          }
+        }
+      }
+
+      // サジェストのアラートを表示する
+      this.$refs.suggest.show(
+        parameters.options.lucky,
+        parameters.options.discount,
+        100 - Math.floor((min_total_price / max_total_price) * 100),
+        DiscountConditions.getMessage(max_index),
+        DiscountConditions.getMessage(min_index)
+      );
+      // セレクトボックスの内容を更新する
+      this.forms.pray = min_index;
+    },
+    /**
+     * イベント：プリセットの設定を更新する
+     */
     onPresetChanged(item) {
       this.forms.selected_radio = item.value.selected_radio;
       this.forms.require = item.value.require;
@@ -380,6 +485,9 @@ export default {
       this.forms.lucky = "";
       this.forms.tickets = "";
     },
+    /**
+     * イベント：検索開始
+     */
     onClickStart() {
       this.$v.$touch();
       // 入力チェックが不正なら処理しない
@@ -396,26 +504,7 @@ export default {
         return;
       }
 
-      const stringToValue = (string, defaults) => {
-        const result = parseInt(string ?? "");
-        if (Number.isNaN(result)) {
-          return defaults;
-        }
-        return result;
-      };
-
-      this.$emit("on-start", {
-        request_type: this.forms.selected_radio,
-        tickets: stringToValue(this.forms.tickets, 0),
-        require: stringToValue(this.forms.require, 200),
-        kakutei: stringToValue(this.forms.kakutei, 5),
-        options: {
-          discount: stringToValue(this.forms.discount, 0),
-          lucky: stringToValue(this.forms.lucky, 0),
-          reward: this.forms.reward == REWARD_ITEM_ENABLED ? true : false,
-          pray: this.forms.pray
-        }
-      });
+      this.$emit("on-start", this.parseRequestValue());
     }
   }
 };

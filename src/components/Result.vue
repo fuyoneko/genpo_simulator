@@ -44,17 +44,8 @@
 import ChartGraph from "./ChartGraph";
 import Calculate from "../logic/calculate";
 import DataList from "./DataList";
-import {
-  SENARIO_KAKUTEI,
-  SENARIO_GACHA,
-  SENARIO_LUCKY,
-  SENARIO_REWARD
-} from "../logic/senario_lucky";
-import {
-  SENARIO_NORMAL_KAKUTEI,
-  SENARIO_NORMAL_KAKUTEI_NO_BUFF,
-  SENARIO_NORMAL_GACHA
-} from "../logic/senario_normal";
+import DiscountConditons from "../logic/discount_conditions";
+import Senario from "../logic/senario";
 
 const ValueToString = value => {
   if (value === undefined) {
@@ -87,35 +78,15 @@ export default {
     onClickHelp() {
       this.help_message = !this.help_message;
     },
-    parameter(mode, has_reward) {
-      const KAKUTEI =
-        mode == "lucky" ? SENARIO_KAKUTEI : SENARIO_NORMAL_KAKUTEI;
-      const NO_BUFF_KAKUTEI =
-        mode == "lucky" ? SENARIO_KAKUTEI : SENARIO_NORMAL_KAKUTEI_NO_BUFF;
-      const GACHA = mode == "lucky" ? SENARIO_GACHA : SENARIO_NORMAL_GACHA;
-
-      let max_senario = [NO_BUFF_KAKUTEI];
-      let execute_senario = [KAKUTEI, GACHA];
-      if (mode == "lucky") {
-        execute_senario.push(SENARIO_LUCKY);
-      }
-      if (mode == "lucky" && has_reward) {
-        execute_senario.push(SENARIO_REWARD);
-        max_senario.push(SENARIO_REWARD);
-      }
-      return {
-        max_senario,
-        execute_senario
-      };
-    },
     execute(parameters) {
       // 必要な絆の数
       const require = parameters.require;
       // 確定時の絆排出数
       const kakutei = parameters.kakutei;
       // ガチャを引くスタイル（単発時に割引券を使うか？）
-      const do_not_use_discount_when_one =
-        parameters.options.pray == 0 ? true : false;
+      const discount_condition = DiscountConditons.getMethod(
+        parameters.options.pray
+      );
       // 検証回数
       const tests = 1000;
       // モード
@@ -133,7 +104,10 @@ export default {
       };
 
       // ガチャのパラメータ
-      const { max_senario, execute_senario } = this.parameter(mode, has_reward);
+      const { max_senario, execute_senario } = Senario.load_senario(
+        mode,
+        has_reward
+      );
 
       // 計算結果を格納する変数
       let min_price = Number.MAX_SAFE_INTEGER;
@@ -174,7 +148,7 @@ export default {
         mode,
         Math.floor(Math.random() * 99999999)
       );
-      calc_max.execute(require, do_not_use_discount_when_one);
+      calc_max.execute(require, discount_condition);
 
       for (let index = 0; index < tests; index++) {
         // ガチャの結果を取得する
@@ -184,7 +158,7 @@ export default {
           mode,
           Math.floor(Math.random() * 99999999)
         );
-        calc.execute(require, do_not_use_discount_when_one);
+        calc.execute(require, discount_condition);
 
         min_price = Math.min(calc.data.price_total, min_price);
         max_price = Math.max(calc.data.price_total, max_price);

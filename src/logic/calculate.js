@@ -91,9 +91,9 @@ class Calculate {
     return this.data.current < require ? true : false;
   }
 
-  execute(require, do_not_use_discount_when_one = false) {
+  execute(require, discount_condition) {
     while (this.isNeedToExecute(require)) {
-      this.executeStep(require, do_not_use_discount_when_one);
+      this.executeStep(require, discount_condition(this.data));
     }
   }
 }
